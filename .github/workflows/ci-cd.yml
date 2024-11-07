@@ -1,0 +1,63 @@
+name: CI/CD for Spring Boot App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '21'
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packaged-application
+          path: target/*.jar
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packaged-application
+          path: target/
+
+      - name: Setup key
+        id: setup-key
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          echo "$DEPLOY_KEY" >> $HOME/key.pem
+          chmod 400 $HOME/key.pem
+
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ec2-user
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: "target/*.jar"
+          target: "/home/ec2-user/deployment/"
+
+      - name: Connect SSH and Restart Services
+        run: |
+          ssh -o StrictHostKeyChecking=no -i $HOME/key.pem ec2-user@${{ secrets.DEPLOY_HOST }} '
+            sudo systemctl restart spring-boot-app
+          '
