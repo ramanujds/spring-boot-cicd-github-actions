@@ -160,3 +160,48 @@ You can check the deployment logs in the Actions tab on GitHub.
 Now, access your Spring Boot API using your EC2 instance’s public IPv4 DNS and the port on which you have configured your spring boot app
 
 ### Congratulations! You have successfully deployed your Java Spring Boot application on an AWS EC2 instance with CI/CD integration using GitHub Actions.
+
+
+## Additionally Deploying with Postgres Database
+
+To deploy a Spring Boot application with a PostgreSQL database, we will use PostgreSQL on Docker.
+
+### 1. Install Docker
+
+```bash
+
+sudo yum install docker -y
+
+```
+
+### 2. Start and configure Docker Service
+
+```bash
+sudo service docker start
+
+sudo usermod -aG docker ec2-user
+
+sudo systemctl restart docker
+
+newgrp docker
+
+```
+
+
+### 3. Pull the PostgreSQL Image
+
+```bash
+docker pull postgres
+```
+
+### 4. Run the PostgreSQL Container
+
+```bash
+docker run --name postgres -e POSTGRES_PASSWORD=password -d -p 5432:5432 postgres
+```
+
+### 5. Update the Spring Boot Application Properties
+
+
+### Congratulations! You have successfully deployed your Java Spring Boot application on an AWS EC2 instance with CI/CD integration using GitHub Actions.
+
